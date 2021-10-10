@@ -44,7 +44,7 @@ class Projects(models.Model):
     title = models.CharField(max_length=30)
     description = models.CharField(max_length=300)
     type = models.CharField(max_length=3, choices=TYPE_CHOICES)
-    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
 
     def __str__(self):
         return self.title
@@ -73,7 +73,7 @@ class Issues(models.Model):
         related_name='author',
         blank=True
     )
-    assignee_user_id = models.ManyToManyField(Contributors, related_name='assignee', blank=True)
+    assignee_user_id = models.ManyToManyField(User, related_name='assignee', blank=True)
     created_time = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
