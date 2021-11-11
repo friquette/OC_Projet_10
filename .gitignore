@@ -1,0 +1,5 @@
+.vscode
+env
+postman_doc.txt
+db.sqlite3
+.flake8
