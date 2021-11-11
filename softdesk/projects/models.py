@@ -49,6 +49,9 @@ class Projects(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        verbose_name_plural = "Projects"
+
 
 class Contributors(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -58,6 +61,9 @@ class Contributors(models.Model):
 
     def __str__(self):
         return self.project_id.title
+
+    class Meta:
+        verbose_name_plural = "Contributors"
 
 
 class Issues(models.Model):
@@ -79,13 +85,19 @@ class Issues(models.Model):
     def __str__(self):
         return f"{self.title} - {self.tag}"
 
+    class Meta:
+        verbose_name_plural = "Issues"
+
 
 class Comments(models.Model):
     comment_id = models.BigAutoField(primary_key=True)
     description = models.CharField(max_length=300)
-    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
     issue_id = models.ForeignKey(Issues, on_delete=models.CASCADE, blank=True)
     created_time = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.description
+
+    class Meta:
+        verbose_name_plural = "Comments"
