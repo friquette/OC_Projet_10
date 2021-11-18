@@ -19,8 +19,9 @@ class CreateAndListProjects(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        project = Projects.objects.all()
-        serializer = ProjectsSerializer(project, many=True)
+        contributors = Contributors.objects.filter(user_id=request.user)
+        projects = [project.project_id for project in contributors]
+        serializer = ProjectsSerializer(projects, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -47,6 +48,7 @@ class ProjectsDetails(APIView):
     def put(self, request, pk):
         project = Projects.objects.get(project_id=pk)
         serializer = ProjectsSerializer(project, data=request.data)
+        self.check_object_permissions(request, project)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -56,10 +58,12 @@ class ProjectsDetails(APIView):
     def get(self, request, pk):
         project = Projects.objects.get(project_id=pk)
         serializer = ProjectsSerializer(project)
+        self.check_object_permissions(request, project)
         return Response(serializer.data)
 
     def delete(self, request, pk):
         project = Projects.objects.get(project_id=pk)
+        self.check_object_permissions(request, project)
         project.delete()
         return Response(f"Project {project} successfully deleted !")
 
@@ -70,12 +74,13 @@ class CreateAndListContributors(APIView):
     def get(self, request, pk):
         contributor = Contributors.objects.filter(project_id=pk)
         serializer = ContributorsSerializer(contributor, many=True)
+        self.check_object_permissions(request, contributor)
         return Response(serializer.data)
 
     def post(self, request, pk):
         serializer = ContributorsSerializer(data=request.data)
         users = Contributors.objects.filter(project_id=pk)
-        print(users)
+        self.check_object_permissions(request, users)
         if serializer.is_valid():
             if serializer.validated_data['user_id'] in [user.user_id for user in users]:
                 return Response(
@@ -99,6 +104,7 @@ class DeleteContributors(APIView):
 
     def delete(self, request, project_id, user_id):
         contributor = Contributors.objects.get(project_id=project_id, user_id=user_id)
+        self.check_object_permissions(request, contributor)
         contributor.delete()
         return Response(
             f"Contributor {contributor.user_id.first_name} {contributor.user_id.last_name} \
@@ -112,6 +118,7 @@ class CreateAndListIssues(APIView):
     def get(self, request, project_id):
         issue = Issues.objects.filter(project_id=project_id)
         serializer = IssuesSerializer(issue, many=True)
+        self.check_object_permissions(request, issue)
         return Response(serializer.data)
 
     def post(self, request, project_id):
@@ -119,6 +126,7 @@ class CreateAndListIssues(APIView):
         contributors = Contributors.objects.filter(project_id=project)
         contributors_user_id = [c.user_id.user_id for c in contributors]
         serializer = IssuesSerializer(data=request.data)
+        self.check_object_permissions(request, contributors_user_id)
 
         if serializer.is_valid():
             serializer.validated_data['project_id'] = project
@@ -142,6 +150,7 @@ class UpdateAndDeleteIssues(APIView):
     def put(self, request, project_id, pk):
         issue = Issues.objects.get(id=pk, project_id=project_id)
         serializer = IssuesSerializer(issue, data=request.data)
+        self.check_object_permissions(request, issue)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -149,6 +158,7 @@ class UpdateAndDeleteIssues(APIView):
 
     def delete(self, request, project_id, pk):
         issue = Issues.objects.get(id=pk, project_id=project_id)
+        self.check_object_permissions(request, issue)
         issue.delete()
         return Response(f"Issue {issue.title} for project {issue.project_id} \
 successfully deleted !")
@@ -160,12 +170,14 @@ class CreateAndListComments(APIView):
     def get(self, request, project_id, pk):
         comment = Comments.objects.filter(issue_id=pk)
         serializer = CommentsSerializer(comment, many=True)
+        self.check_object_permissions(request, comment)
         return Response(serializer.data)
 
     def post(self, request, project_id, pk):
         serializer = CommentsSerializer(data=request.data)
         if serializer.is_valid():
             issue = Issues.objects.get(id=pk, project_id=project_id)
+            self.check_object_permissions(request, issue)
             serializer.validated_data['issue_id'] = issue
             serializer.validated_data['author_user_id'] = request.user
             serializer.save()
@@ -179,6 +191,7 @@ class CommentsDetails(APIView):
     def put(self, request, project_id, pk, comment_id):
         comment = Comments.objects.get(comment_id=comment_id, issue_id=pk)
         serializer = CommentsSerializer(comment, data=request.data)
+        self.check_object_permissions(request, comment)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -187,10 +200,12 @@ class CommentsDetails(APIView):
     def get(self, request, project_id, pk, comment_id):
         comment = Comments.objects.get(comment_id=comment_id, issue_id=pk)
         serializer = CommentsSerializer(comment)
+        self.check_object_permissions(request, comment)
         return Response(serializer.data)
 
     def delete(self, request, project_id, pk, comment_id):
         comment = Comments.objects.get(comment_id=comment_id, issue_id=pk)
+        self.check_object_permissions(request, comment)
         comment.delete()
         return Response(f"Comment '{comment}' for project: {comment.issue_id}, \
 successfully deleted !")

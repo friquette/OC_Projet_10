@@ -6,7 +6,7 @@ from .models import Contributors
 class IsAuthorOrReadOnly(permissions.BasePermission):
     edit_methods = ('PUT', 'DELETE')
     read_methods = ('GET')
-    message = "You have not the permissions to do this."
+    message = "You don't have the permissions to do this."
 
     def has_permission(self, request, view):
         if request.user.is_authenticated:
@@ -15,7 +15,7 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         contributors = Contributors.objects.filter(project_id=obj.project_id)
         contributors_user_id = [c.user_id for c in contributors]
-
+    
         if request.user.is_superuser:
             return True
 
@@ -31,7 +31,7 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 class IsAuthor(permissions.BasePermission):
     edit_methods = ('POST', 'DELETE')
     read_methods = ('GET')
-    message = "You have not the permissions to do this."
+    message = "You don't have the permissions to do this."
 
     def has_permission(self, request, view):
         if request.user.is_authenticated:
@@ -55,7 +55,7 @@ class IsAuthor(permissions.BasePermission):
 class IsAuthorOrContributor(permissions.BasePermission):
     contrib_methods = ('GET', 'POST')
     edit_methods = ('PUT', 'DELETE')
-    message = "You have not the permissions to do this."
+    message = "You don't have the permissions to do this."
 
     def has_permission(self, request, view):
         if request.user.is_authenticated:
