@@ -103,11 +103,12 @@ class DeleteContributors(APIView):
     permission_classes = [IsAuthor]
 
     def delete(self, request, project_id, user_id):
-        contributor = Contributors.objects.get(project_id=project_id, user_id=user_id)
-        self.check_object_permissions(request, contributor)
-        contributor.delete()
+        contributors = Contributors.objects.filter(project_id=project_id)
+        contributor_to_delete = Contributors.objects.get(project_id=project_id, user_id=user_id)
+        self.check_object_permissions(request, contributors)
+        contributor_to_delete.delete()
         return Response(
-            f"Contributor {contributor.user_id.first_name} {contributor.user_id.last_name} \
+            f"Contributor {contributor_to_delete.user_id.first_name} {contributor_to_delete.user_id.last_name} \
 successfully deleted !"
         )
 
@@ -117,16 +118,17 @@ class CreateAndListIssues(APIView):
 
     def get(self, request, project_id):
         issue = Issues.objects.filter(project_id=project_id)
+        project = Projects.objects.get(project_id=project_id)
         serializer = IssuesSerializer(issue, many=True)
-        self.check_object_permissions(request, issue)
+        self.check_object_permissions(request, project)
         return Response(serializer.data)
 
     def post(self, request, project_id):
         project = Projects.objects.get(project_id=project_id)
-        contributors = Contributors.objects.filter(project_id=project)
+        contributors = Contributors.objects.filter(project_id=project_id)
         contributors_user_id = [c.user_id.user_id for c in contributors]
         serializer = IssuesSerializer(data=request.data)
-        self.check_object_permissions(request, contributors_user_id)
+        self.check_object_permissions(request, project)
 
         if serializer.is_valid():
             serializer.validated_data['project_id'] = project
@@ -148,17 +150,19 @@ class UpdateAndDeleteIssues(APIView):
     permission_classes = [IsAuthorOrContributor]
 
     def put(self, request, project_id, pk):
+        project = Projects.objects.get(project_id=project_id)
         issue = Issues.objects.get(id=pk, project_id=project_id)
         serializer = IssuesSerializer(issue, data=request.data)
-        self.check_object_permissions(request, issue)
+        self.check_object_permissions(request, project)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, project_id, pk):
+        project = Projects.objects.get(project_id=project_id)
         issue = Issues.objects.get(id=pk, project_id=project_id)
-        self.check_object_permissions(request, issue)
+        self.check_object_permissions(request, project)
         issue.delete()
         return Response(f"Issue {issue.title} for project {issue.project_id} \
 successfully deleted !")
@@ -168,16 +172,18 @@ class CreateAndListComments(APIView):
     permission_classes = [IsAuthorOrContributor]
 
     def get(self, request, project_id, pk):
+        project = Projects.objects.get(project_id=project_id)
         comment = Comments.objects.filter(issue_id=pk)
         serializer = CommentsSerializer(comment, many=True)
-        self.check_object_permissions(request, comment)
+        self.check_object_permissions(request, project)
         return Response(serializer.data)
 
     def post(self, request, project_id, pk):
+        project = Projects.objects.get(project_id=project_id)
         serializer = CommentsSerializer(data=request.data)
         if serializer.is_valid():
             issue = Issues.objects.get(id=pk, project_id=project_id)
-            self.check_object_permissions(request, issue)
+            self.check_object_permissions(request, project)
             serializer.validated_data['issue_id'] = issue
             serializer.validated_data['author_user_id'] = request.user
             serializer.save()
@@ -189,23 +195,26 @@ class CommentsDetails(APIView):
     permission_classes = [IsAuthorOrContributor]
 
     def put(self, request, project_id, pk, comment_id):
+        project = Projects.objects.get(project_id=project_id)
         comment = Comments.objects.get(comment_id=comment_id, issue_id=pk)
         serializer = CommentsSerializer(comment, data=request.data)
-        self.check_object_permissions(request, comment)
+        self.check_object_permissions(request, project)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, project_id, pk, comment_id):
+        project = Projects.objects.get(project_id=project_id)
         comment = Comments.objects.get(comment_id=comment_id, issue_id=pk)
         serializer = CommentsSerializer(comment)
-        self.check_object_permissions(request, comment)
+        self.check_object_permissions(request, project)
         return Response(serializer.data)
 
     def delete(self, request, project_id, pk, comment_id):
+        project = Projects.objects.get(project_id=project_id)
         comment = Comments.objects.get(comment_id=comment_id, issue_id=pk)
-        self.check_object_permissions(request, comment)
+        self.check_object_permissions(request, project)
         comment.delete()
         return Response(f"Comment '{comment}' for project: {comment.issue_id}, \
 successfully deleted !")

@@ -15,7 +15,7 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         contributors = Contributors.objects.filter(project_id=obj.project_id)
         contributors_user_id = [c.user_id for c in contributors]
-    
+
         if request.user.is_superuser:
             return True
 
@@ -38,7 +38,7 @@ class IsAuthor(permissions.BasePermission):
             return True
 
     def has_object_permission(self, request, view, obj):
-        contributors = Contributors.objects.filter(project_id=obj.project_id, role='auth')
+        contributors = Contributors.objects.filter(project_id=obj[0].project_id, role='auth')
         contributors_user_id = [c.user_id for c in contributors]
         if request.user.is_superuser:
             return True
@@ -62,13 +62,13 @@ class IsAuthorOrContributor(permissions.BasePermission):
             return True
 
     def has_object_permission(self, request, view, obj):
-        contributors = Contributors.objects.filter(project_id=obj.project_id)
-        contributors_user_id = [c.user_id for c in contributors]
+        contributor = Contributors.objects.get(project_id=obj, user_id=request.user)
 
-        if request.user in contributors_user_id and request.method in self.contrib_methods:
+        if request.user == contributor.user_id and request.method in self.contrib_methods:
             return True
 
-        if request.user in obj.author_user_id and request.method in self.edit_methods:
+        if request.user == contributor.user_id and contributor.role == 'auth' and \
+                request.method in self.edit_methods:
             return True
 
         return False
